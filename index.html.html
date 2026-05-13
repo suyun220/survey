@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>출장 불가 날짜 조사</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5f5f3;color:#1a1a1a;min-height:100vh;}
+.wrap{max-width:680px;margin:0 auto;padding:24px 16px 80px;}
+.screen{display:none;}
+.screen.active{display:block;}
+h2{font-size:18px;font-weight:500;margin-bottom:6px;}
+.sub{font-size:14px;color:#666;margin-bottom:1.5rem;}
+.card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1.25rem;margin-bottom:1rem;}
+label{font-size:17px;color:#555;display:block;margin-bottom:8px;}
+input[type=text],input[type=password]{width:100%;font-size:19px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;outline:none;font-family:inherit;}
+input[type=text]:focus,input[type=password]:focus{border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,0.15);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;border:0.5px solid #ccc;background:transparent;cursor:pointer;font-size:14px;color:#1a1a1a;transition:background 0.15s;font-family:inherit;}
+.btn:hover{background:#f0f0ee;}
+.btn.primary{background:#185FA5;border-color:#185FA5;color:#fff;font-size:16px;padding:10px 22px;}
+.btn.primary:hover{background:#0C447C;}
+.btn.sm{font-size:12px;padding:5px 12px;}
+.btn.danger{background:#A32D2D;border-color:#A32D2D;color:#fff;}
+.btn.danger:hover{background:#791F1F;}
+
+/* 홈 */
+.home-card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:2.5rem 1.5rem;text-align:center;margin-bottom:1rem;}
+.home-icon{font-size:48px;color:#185FA5;margin-bottom:16px;}
+.home-title{font-size:22px;font-weight:500;margin-bottom:10px;}
+.home-sub{font-size:15px;color:#555;margin-bottom:2rem;line-height:1.7;}
+.home-btn-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.btn-survey{background:#185FA5;border:none;color:#fff;font-size:17px;padding:14px 36px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:background 0.15s;font-family:inherit;}
+.btn-survey:hover{background:#0C447C;}
+.btn-admin-home{background:transparent;border:0.5px solid #ccc;color:#888;font-size:13px;padding:10px 18px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background 0.15s;font-family:inherit;}
+.btn-admin-home:hover{background:#f0f0ee;}
+
+/* 교과 */
+.subject-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;}
+.subject-btn{padding:14px 8px;border-radius:8px;border:0.5px solid #ccc;background:#f5f5f3;cursor:pointer;font-size:18px;font-weight:500;color:#666;text-align:center;transition:all 0.15s;font-family:inherit;}
+.subject-btn:hover{border-color:#999;color:#333;}
+.subject-btn.sel-국어 {background:#EEEDFE;border-color:#AFA9EC;color:#3C3489;border-width:2px;}
+.subject-btn.sel-수학 {background:#E6F1FB;border-color:#85B7EB;color:#0C447C;border-width:2px;}
+.subject-btn.sel-영어 {background:#E1F5EE;border-color:#5DCAA5;color:#085041;border-width:2px;}
+.subject-btn.sel-역사 {background:#FAECE7;border-color:#F0997B;color:#993C1D;border-width:2px;}
+.subject-btn.sel-사회 {background:#FAEEDA;border-color:#FAC775;color:#633806;border-width:2px;}
+.subject-btn.sel-과학 {background:#EAF3DE;border-color:#97C459;color:#27500A;border-width:2px;}
+
+/* 달력 */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-nav-btn{width:40px;height:40px;border-radius:50%;border:0.5px solid #ccc;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:background 0.12s;}
+.cal-nav-btn:hover{background:#f0f0ee;}
+.cal-nav-btn:disabled{opacity:0.3;cursor:default;}
+.cal-month-label{font-size:18px;font-weight:500;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.day-header{font-size:13px;color:#888;text-align:center;padding:6px 0;font-weight:500;}
+.day-header.sun{color:#A32D2D;}
+.day-header.sat{color:#185FA5;}
+.day-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:16px;border-radius:8px;cursor:pointer;border:0.5px solid transparent;transition:all 0.12s;user-select:none;position:relative;}
+.day-cell:hover:not(.empty):not(.outside){background:#f0f0ee;border-color:#ccc;}
+.day-cell.selected{background:#FAECE7;border-color:#D85A30;color:#993C1D;font-weight:500;}
+.day-cell.empty,.day-cell.outside{cursor:default;color:#ccc;opacity:0.4;}
+.day-cell.sun-col{color:#A32D2D;}
+.day-cell.sat-col{color:#185FA5;}
+.day-cell.holiday{color:#A32D2D;background:#FFF5F5;}
+.day-cell.holiday.selected{background:#FCEBEB;border-color:#E24B4A;}
+.holiday-dot{width:4px;height:4px;border-radius:50%;background:#E24B4A;position:absolute;bottom:3px;}
+
+.selected-count{font-size:14px;color:#666;margin:8px 0 12px;}
+.selected-count span{font-weight:500;color:#D85A30;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{font-size:12px;background:#FAECE7;color:#993C1D;border-radius:20px;padding:3px 10px;}
+
+.alert{font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:1rem;}
+.alert.success{background:#EAF3DE;color:#3B6D11;border:0.5px solid #97C459;}
+.alert.error  {background:#FCEBEB;color:#A32D2D;border:0.5px solid #F09595;}
+.alert.info   {background:#E6F1FB;color:#185FA5;border:0.5px solid #85B7EB;}
+.alert.warn   {background:#FAEEDA;color:#633806;border:0.5px solid #FAC775;}
+
+.step-indicator{display:flex;gap:8px;align-items:center;margin-bottom:1.5rem;}
+.step{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:0.5px solid #ccc;color:#888;background:#f0f0ee;}
+.step.active{background:#185FA5;border-color:#185FA5;color:#fff;}
+.step.done  {background:#3B6D11;border-color:#3B6D11;color:#fff;}
+.step-line{flex:1;height:0.5px;background:#ddd;}
+
+/* 관리자 */
+.tabs{display:flex;border-bottom:0.5px solid #ddd;margin-bottom:1.25rem;overflow-x:auto;}
+.tab{padding:8px 13px;font-size:13px;cursor:pointer;color:#888;border-bottom:2px solid transparent;margin-bottom:-0.5px;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;font-family:inherit;}
+.tab.active{color:#185FA5;border-bottom-color:#185FA5;font-weight:500;}
+.subj-tag{font-size:12px;padding:4px 12px;border-radius:20px;border:0.5px solid;cursor:pointer;transition:opacity 0.12s;display:inline-block;}
+.subj-tag.off{opacity:0.3;}
+.result-table{width:100%;border-collapse:collapse;font-size:12px;}
+.result-table th{background:#f5f5f3;padding:6px 5px;text-align:center;font-weight:500;font-size:11px;color:#888;border:0.5px solid #e0e0e0;white-space:nowrap;}
+.result-table td{padding:5px 4px;text-align:center;border:0.5px solid #e0e0e0;font-size:12px;vertical-align:middle;white-space:nowrap;}
+.cell-ok{background:#EAF3DE;color:#27500A;}
+.cell-ng{background:#FCEBEB;color:#A32D2D;font-weight:500;}
+.date-list-item{border:0.5px solid #e0e0e0;border-radius:8px;padding:10px 14px;margin-bottom:6px;}
+.date-list-item.all-ok{border-color:#97C459;background:#F6FBF0;}
+.admin-table{width:100%;border-collapse:collapse;font-size:13px;}
+.admin-table th{background:#f5f5f3;padding:8px 10px;text-align:left;font-weight:500;font-size:12px;color:#888;border-bottom:0.5px solid #e0e0e0;}
+.admin-table td{padding:8px 10px;border-bottom:0.5px solid #e0e0e0;vertical-align:top;}
+.resp-badge  {display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:#EAF3DE;color:#27500A;}
+.noresp-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:#FCEBEB;color:#A32D2D;}
+.setup-step{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:0.5px solid #e0e0e0;}
+.setup-num{width:24px;height:24px;border-radius:50%;background:#185FA5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px;}
+.setup-step:last-child{border-bottom:none;}
+.code-box{font-family:monospace;font-size:11px;background:#f5f5f3;border:0.5px solid #ccc;border-radius:8px;padding:10px 12px;margin-top:8px;white-space:pre-wrap;line-height:1.7;color:#555;}
+.metric{background:#f5f5f3;border-radius:8px;padding:10px 18px;text-align:center;}
+.metric-label{font-size:12px;color:#888;margin-bottom:4px;}
+.metric-value{font-size:24px;font-weight:500;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+
+<!-- 홈 -->
+<div id="screen-home" class="screen active">
+  <div class="home-card">
+    <div class="home-icon"><i class="ti ti-calendar-event"></i></div>
+    <div class="home-title">출장 불가 날짜 조사</div>
+    <div class="home-sub">2026년 5월 29일 ~ 7월 16일<br>담당 교과를 선택하고 출장이 불가능한 날짜를 선택해주세요.</div>
+    <div class="home-btn-row">
+      <button class="btn-survey" onclick="showScreen('screen-survey')">
+        <i class="ti ti-pencil"></i> 설문 참여하기
+      </button>
+      <button class="btn-admin-home" onclick="showScreen('screen-admin-login')">
+        <i class="ti ti-shield-lock"></i> 관리자
+      </button>
+    </div>
+  </div>
+  <div style="font-size:12px;color:#aaa;text-align:center;margin-top:4px">문의: 담당자에게 연락해주세요</div>
+</div>
+
+<!-- 설문 -->
+<div id="screen-survey" class="screen">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button class="btn sm" onclick="showScreen('screen-home')"><i class="ti ti-arrow-left"></i> 홈</button>
+    <h2 style="margin-bottom:0"><i class="ti ti-calendar-x" style="font-size:18px;vertical-align:-3px;margin-right:6px;color:#D85A30"></i>출장 불가 날짜 조사</h2>
+  </div>
+  <p class="sub" style="margin-top:6px">불가능한 날짜를 선택 후 제출해주세요</p>
+  <div class="step-indicator">
+    <div class="step active" id="st1">1</div><div class="step-line"></div>
+    <div class="step" id="st2">2</div><div class="step-line"></div>
+    <div class="step" id="st3">3</div><div class="step-line"></div>
+    <div class="step" id="st4"><i class="ti ti-check" style="font-size:12px"></i></div>
+  </div>
+
+  <div id="phase-info">
+    <div class="card">
+      <label>성명</label>
+      <input type="text" id="inp-name" placeholder="홍길동" maxlength="20" style="margin-bottom:18px"/>
+      <label>담당 교과</label>
+      <div class="subject-grid">
+        <div class="subject-btn" data-subj="국어"  onclick="selectSubject(this)">국어</div>
+        <div class="subject-btn" data-subj="수학"  onclick="selectSubject(this)">수학</div>
+        <div class="subject-btn" data-subj="영어"  onclick="selectSubject(this)">영어</div>
+        <div class="subject-btn" data-subj="역사"  onclick="selectSubject(this)">역사(한국사)</div>
+        <div class="subject-btn" data-subj="사회"  onclick="selectSubject(this)">사회</div>
+        <div class="subject-btn" data-subj="과학"  onclick="selectSubject(this)">과학</div>
+      </div>
+    </div>
+    <div id="info-alert" class="alert error" style="display:none"></div>
+    <button class="btn primary" onclick="goToCalendar()"><i class="ti ti-arrow-right"></i> 날짜 선택하러 가기</button>
+  </div>
+
+  <div id="phase-calendar" style="display:none">
+    <div id="name-badge" class="alert info" style="margin-bottom:1rem"></div>
+    <div class="card">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" id="btn-prev" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+        <span class="cal-month-label" id="cal-month-label"></span>
+        <button class="cal-nav-btn" id="btn-next" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div class="selected-count">선택된 날짜: <span id="sel-count">0</span>일
+      <span id="sel-none" style="color:#aaa;font-size:12px">&nbsp;(없으면 그냥 제출하세요)</span>
+    </div>
+    <div class="chips" id="chips-wrap" style="margin-bottom:1.25rem"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="clearAll()"><i class="ti ti-x"></i> 전체 해제</button>
+      <button class="btn primary" onclick="goToConfirm()"><i class="ti ti-check"></i> 확인 및 제출</button>
+    </div>
+  </div>
+
+  <div id="phase-confirm" style="display:none">
+    <div class="card">
+      <div style="margin-bottom:12px"><label style="font-size:13px">제출자</label><div style="font-size:17px;font-weight:500" id="confirm-name"></div></div>
+      <div style="margin-bottom:12px"><label style="font-size:13px">교과</label><div id="confirm-subj"></div></div>
+      <div><label style="font-size:13px">출장 불가 날짜 (<span id="confirm-count"></span>일)</label>
+        <div id="confirm-chips" class="chips"></div>
+        <div id="confirm-none" style="font-size:14px;color:#888;display:none">선택 없음 (모든 날짜 가능)</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="backToCalendar()"><i class="ti ti-arrow-left"></i> 수정</button>
+      <button class="btn primary" id="submit-btn" onclick="submitResponse()"><i class="ti ti-send"></i> 최종 제출</button>
+    </div>
+  </div>
+
+  <div id="phase-done" style="display:none">
+    <div class="alert success" style="font-size:15px;padding:1rem 1.25rem">
+      <i class="ti ti-circle-check" style="font-size:18px;vertical-align:-3px;margin-right:6px"></i>제출 완료! 감사합니다.
+    </div>
+    <div class="card" id="done-summary"></div>
+    <button class="btn" style="margin-top:8px" onclick="showScreen('screen-home')"><i class="ti ti-home"></i> 홈으로</button>
+  </div>
+</div>
+
+<!-- 관리자 로그인 -->
+<div id="screen-admin-login" class="screen">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+    <button class="btn sm" onclick="showScreen('screen-home')"><i class="ti ti-arrow-left"></i> 홈</button>
+    <h2 style="margin-bottom:0"><i class="ti ti-shield-lock" style="font-size:18px;vertical-align:-3px;margin-right:6px;color:#185FA5"></i>관리자 로그인</h2>
+  </div>
+  <div class="card" style="max-width:360px">
+    <label style="font-size:13px;margin-bottom:6px">비밀번호</label>
+    <input type="password" id="admin-pw" placeholder="••••••" style="font-size:16px;margin-bottom:12px" onkeydown="if(event.key==='Enter')adminLogin()"/>
+    <button class="btn primary" style="font-size:14px;padding:9px 20px" onclick="adminLogin()"><i class="ti ti-lock-open"></i> 로그인</button>
+    <div id="pw-error" class="alert error" style="display:none;margin-top:10px">비밀번호가 틀렸습니다.</div>
+  </div>
+</div>
+
+<!-- 관리자 대시보드 -->
+<div id="screen-admin" class="screen">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+    <h2><i class="ti ti-layout-dashboard" style="font-size:20px;vertical-align:-3px;margin-right:6px;color:#185FA5"></i>관리자 대시보드</h2>
+    <button class="btn sm" onclick="showScreen('screen-home')"><i class="ti ti-home"></i> 홈</button>
+  </div>
+  <p class="sub">2026년 5월 29일 ~ 7월 16일</p>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('available')" id="tab-available">교과별 가능 날짜</button>
+    <button class="tab" onclick="switchTab('roster')"    id="tab-roster">응답 현황</button>
+    <button class="tab" onclick="switchTab('list')"      id="tab-list">응답 목록</button>
+    <button class="tab" onclick="switchTab('setup')"     id="tab-setup">연동 설정</button>
+  </div>
+
+  <div id="tab-content-available">
+    <p style="font-size:13px;color:#888;margin-bottom:10px">교과 태그를 켜고 끄면 선택 교과들의 <strong>공통 출장 가능 날짜</strong>를 계산합니다.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem" id="admin-subj-filter"></div>
+    <div id="available-result"></div>
+  </div>
+
+  <div id="tab-content-roster" style="display:none">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem" id="roster-subj-filter"></div>
+    <div id="roster-result"></div>
+  </div>
+
+  <div id="tab-content-list" style="display:none">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+      <span style="font-size:14px;color:#888">총 <strong id="total-count">0</strong>명 응답</span>
+      <button class="btn sm" onclick="exportCSV()"><i class="ti ti-download"></i> CSV</button>
+      <button class="btn sm danger" onclick="clearData()"><i class="ti ti-trash"></i> 전체 삭제</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="admin-table">
+        <thead><tr><th>이름</th><th>교과</th><th>불가 날짜</th><th>날짜 목록</th><th>제출 시각</th></tr></thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="tab-content-setup" style="display:none">
+    <div class="alert info" style="margin-bottom:1.25rem">지금은 <strong>데모 모드</strong>입니다. 아래 설정을 마치면 Google Sheets에 실제로 저장됩니다.</div>
+    <div class="card">
+      <div class="setup-step"><div class="setup-num">1</div><div><div style="font-size:14px;font-weight:500;margin-bottom:4px">Google Sheets 새 파일 만들기</div><div style="font-size:13px;color:#888">sheets.google.com에서 새 스프레드시트를 만드세요.</div></div></div>
+      <div class="setup-step"><div class="setup-num">2</div><div><div style="font-size:14px;font-weight:500;margin-bottom:4px">Apps Script 열기</div><div style="font-size:13px;color:#888">상단 메뉴 → 확장 프로그램 → Apps Script 클릭</div></div></div>
+      <div class="setup-step"><div class="setup-num">3</div><div><div style="font-size:14px;font-weight:500;margin-bottom:4px">코드 붙여넣기</div><div style="font-size:13px;color:#888">기존 코드 전부 지우고 아래 코드를 붙여넣으세요.</div>
+        <div class="code-box" id="script-code-box"></div>
+        <button class="btn sm" style="margin-top:8px" onclick="copyScript()"><i class="ti ti-copy"></i> 코드 복사</button>
+      </div></div>
+      <div class="setup-step"><div class="setup-num">4</div><div><div style="font-size:14px;font-weight:500;margin-bottom:4px">배포 → 웹 앱으로 배포</div><div style="font-size:13px;color:#888">배포 → 새 배포 → 유형: 웹 앱 → 액세스: <strong>모든 사용자</strong> → 배포</div></div></div>
+      <div class="setup-step"><div class="setup-num">5</div><div><div style="font-size:14px;font-weight:500;margin-bottom:4px">웹 앱 URL 입력</div>
+        <input type="text" id="inp-script-url" placeholder="https://script.google.com/macros/s/..." style="margin-top:8px;font-size:13px"/>
+        <button class="btn primary" style="margin-top:8px;font-size:13px;padding:8px 16px" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> 저장</button>
+        <div id="settings-saved" class="alert success" style="display:none;margin-top:8px">저장되었습니다!</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+const START=new Date(2026,4,29),END=new Date(2026,6,16);
+const DAYS=['일','월','화','수','목','금','토'];
+const MONTHS_INFO=[{y:2026,m:4,label:'2026년 5월'},{y:2026,m:5,label:'2026년 6월'},{y:2026,m:6,label:'2026년 7월'}];
+const HOLIDAYS={'2026-06-03':'지방선거'};
+const ROSTER={
+  '국어': ['정지영','박선진','황정아','김미숙','김미정','장경준','박하선','한서현','강슬기'],
+  '수학': ['강유윤','이희정','권지은','김태환','김성환','조설희','염지숙','전아영','고유진'],
+  '영어': ['김미란','장현','오아롱','윤여학','박종민','최빛나','정예현','육진수'],
+  '역사': ['조재희','우성은','정혜숙','박범석','정민경'],
+  '사회': ['김하나','전보라','장의선','노지영','김솔이','이한솔'],
+  '과학': ['김정희','김강훈','김용실','오선숙','이가람','안혜연']
+};
+const SUBJECTS=['국어','수학','영어','역사','사회','과학'];
+const SC={
+  '국어':{bg:'#EEEDFE',bd:'#AFA9EC',tx:'#3C3489'},
+  '수학':{bg:'#E6F1FB',bd:'#85B7EB',tx:'#0C447C'},
+  '영어':{bg:'#E1F5EE',bd:'#5DCAA5',tx:'#085041'},
+  '역사':{bg:'#FAECE7',bd:'#F0997B',tx:'#993C1D'},
+  '사회':{bg:'#FAEEDA',bd:'#FAC775',tx:'#633806'},
+  '과학':{bg:'#EAF3DE',bd:'#97C459',tx:'#27500A'}
+};
+
+let selected=new Set(),userName='',userSubject='',currentMonthIdx=0;
+let responses=[],scriptUrl='';
+const ADMIN_PW='admin7200';
+let activeAdminSubjects=new Set(SUBJECTS),activeRosterSubjects=new Set(SUBJECTS);
+
+function loadSettings(){
+  try{
+    const s=localStorage.getItem('sv4_settings');if(s){const p=JSON.parse(s);scriptUrl=p.url||'';}
+    const r=localStorage.getItem('sv4_responses');if(r)responses=JSON.parse(r);
+  }catch(e){}
+}
+function saveResponses(){try{localStorage.setItem('sv4_responses',JSON.stringify(responses));}catch(e){}}
+
+function showScreen(id){
+  ['screen-home','screen-survey','screen-admin-login','screen-admin'].forEach(s=>{
+    document.getElementById(s).className='screen'+(s===id?' active':'');
+  });
+}
+
+function adminLogin(){
+  if(document.getElementById('admin-pw').value===ADMIN_PW){
+    showScreen('screen-admin');
+    buildSubjFilter('admin-subj-filter',activeAdminSubjects,toggleAdminSubj);
+    buildSubjFilter('roster-subj-filter',activeRosterSubjects,toggleRosterSubj);
+    renderAvailableDates();renderRoster();setScriptCode();
+  }else{document.getElementById('pw-error').style.display='block';}
+}
+
+function selectSubject(el){
+  document.querySelectorAll('.subject-btn').forEach(b=>b.className='subject-btn');
+  el.className='subject-btn sel-'+el.dataset.subj;
+  userSubject=el.dataset.subj;
+}
+
+function goToCalendar(){
+  const n=document.getElementById('inp-name').value.trim();
+  const al=document.getElementById('info-alert');
+  if(!n||!userSubject){al.textContent=!n&&!userSubject?'성명과 교과를 모두 입력해주세요.':!n?'성명을 입력해주세요.':'담당 교과를 선택해주세요.';al.style.display='block';return;}
+  al.style.display='none';userName=n;
+  document.getElementById('st1').className='step done';
+  document.getElementById('st2').className='step active';
+  document.getElementById('phase-info').style.display='none';
+  document.getElementById('phase-calendar').style.display='block';
+  const c=SC[userSubject];
+  document.getElementById('name-badge').innerHTML=`<i class="ti ti-user" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i><strong>${userName}</strong>님 (<span style="font-weight:500;color:${c.tx}">${userSubject}</span>) · 출장 불가 날짜를 선택하세요`;
+  currentMonthIdx=0;renderCalendar();
+}
+
+function renderCalendar(){
+  const{y,m,label}=MONTHS_INFO[currentMonthIdx];
+  document.getElementById('cal-month-label').textContent=label;
+  document.getElementById('btn-prev').disabled=currentMonthIdx===0;
+  document.getElementById('btn-next').disabled=currentMonthIdx===MONTHS_INFO.length-1;
+  const grid=document.getElementById('cal-grid');
+  let html='';
+  DAYS.forEach((d,i)=>{html+=`<div class="day-header${i===0?' sun':i===6?' sat':''}">${d}</div>`;});
+  const fd=new Date(y,m,1).getDay(),ld=new Date(y,m+1,0).getDate();
+  for(let i=0;i<fd;i++)html+='<div class="day-cell empty"></div>';
+  for(let d=1;d<=ld;d++){
+    const dt=new Date(y,m,d),dow=dt.getDay();
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const inRange=dt>=START&&dt<=END,isHol=!!HOLIDAYS[ds],isSel=selected.has(ds);
+    if(!inRange){html+=`<div class="day-cell outside">${d}</div>`;continue;}
+    let cls='day-cell';
+    if(isHol)cls+=' holiday';
+    else if(dow===0)cls+=' sun-col';
+    else if(dow===6)cls+=' sat-col';
+    if(isSel)cls+=' selected';
+    html+=`<div class="${cls}" onclick="toggleDate('${ds}',this)">${d}${isHol?'<span class="holiday-dot"></span>':''}</div>`;
+  }
+  grid.innerHTML=html;
+}
+
+function changeMonth(dir){currentMonthIdx=Math.max(0,Math.min(MONTHS_INFO.length-1,currentMonthIdx+dir));renderCalendar();}
+function toggleDate(ds,el){
+  if(selected.has(ds)){selected.delete(ds);el.classList.remove('selected');}
+  else{selected.add(ds);el.classList.add('selected');}
+  updateChips();
+}
+function updateChips(){
+  const s=[...selected].sort();
+  document.getElementById('sel-count').textContent=s.length;
+  document.getElementById('sel-none').style.display=s.length?'none':'inline';
+  document.getElementById('chips-wrap').innerHTML=s.map(d=>`<span class="chip">${fmtDate(d)}</span>`).join('');
+}
+function clearAll(){selected.clear();renderCalendar();updateChips();}
+function fmtDate(ds){
+  const[y,mo,d]=ds.split('-'),dt=new Date(+y,+mo-1,+d);
+  return `${+mo}/${+d}(${DAYS[dt.getDay()]})${HOLIDAYS[ds]?' 🔴':''}`;
+}
+
+function goToConfirm(){
+  document.getElementById('st2').className='step done';
+  document.getElementById('st3').className='step active';
+  document.getElementById('phase-calendar').style.display='none';
+  document.getElementById('phase-confirm').style.display='block';
+  document.getElementById('confirm-name').textContent=userName;
+  const c=SC[userSubject];
+  document.getElementById('confirm-subj').innerHTML=`<span style="background:${c.bg};color:${c.tx};border:0.5px solid ${c.bd};border-radius:20px;padding:3px 12px;font-size:15px">${userSubject}</span>`;
+  const s=[...selected].sort();
+  document.getElementById('confirm-count').textContent=s.length;
+  document.getElementById('confirm-chips').innerHTML=s.map(d=>`<span class="chip">${fmtDate(d)}</span>`).join('');
+  document.getElementById('confirm-none').style.display=s.length?'none':'block';
+}
+function backToCalendar(){
+  document.getElementById('st2').className='step active';
+  document.getElementById('st3').className='step';
+  document.getElementById('phase-confirm').style.display='none';
+  document.getElementById('phase-calendar').style.display='block';
+}
+async function submitResponse(){
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> 저장 중...';
+  const data={name:userName,subject:userSubject,dates:[...selected].sort(),submittedAt:new Date().toISOString()};
+  if(scriptUrl){try{await fetch(scriptUrl,{method:'POST',mode:'no-cors',body:JSON.stringify(data)});}catch(e){}}
+  responses.push(data);saveResponses();
+  document.getElementById('phase-confirm').style.display='none';
+  document.getElementById('phase-done').style.display='block';
+  document.getElementById('st3').className='step done';
+  document.getElementById('st4').className='step active';
+  const c=SC[userSubject];
+  document.getElementById('done-summary').innerHTML=
+    `<div style="font-size:13px;color:#888;margin-bottom:6px">${userName}님 · <span style="background:${c.bg};color:${c.tx};border-radius:20px;padding:2px 10px;font-size:12px">${userSubject}</span></div>`+
+    (data.dates.length?`<div class="chips">${data.dates.map(d=>`<span class="chip">${fmtDate(d)}</span>`).join('')}</div>`:'<div style="font-size:14px;color:#888">출장 불가 날짜 없음</div>');
+}
+
+function switchTab(tab){
+  ['available','roster','list','setup'].forEach(t=>{
+    document.getElementById('tab-content-'+t).style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+t).className='tab'+(t===tab?' active':'');
+  });
+  if(tab==='list')loadAdminList();
+}
+
+function buildSubjFilter(cid,activeSet,toggleFn){
+  document.getElementById(cid).innerHTML=
+    SUBJECTS.map(s=>{const c=SC[s];
+      return `<span class="subj-tag${activeSet.has(s)?'':' off'}" data-subj="${s}" style="background:${c.bg};border-color:${c.bd};color:${c.tx}" onclick="${toggleFn.name}(this,'${s}')">${s}(${ROSTER[s].length}명)</span>`;
+    }).join('');
+}
+function toggleAdminSubj(el,s){
+  if(activeAdminSubjects.has(s)){activeAdminSubjects.delete(s);el.classList.add('off');}
+  else{activeAdminSubjects.add(s);el.classList.remove('off');}
+  renderAvailableDates();
+}
+function toggleRosterSubj(el,s){
+  if(activeRosterSubjects.has(s)){activeRosterSubjects.delete(s);el.classList.add('off');}
+  else{activeRosterSubjects.add(s);el.classList.remove('off');}
+  renderRoster();
+}
+
+function allWorkDates(){
+  const dates=[];let d=new Date(START);
+  while(d<=END){
+    const ds=toDS(d),dow=d.getDay();
+    if(dow!==0&&dow!==6&&!HOLIDAYS[ds])dates.push(ds);
+    d=new Date(d);d.setDate(d.getDate()+1);
+  }
+  return dates;
+}
+function toDS(dt){return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;}
+
+function renderAvailableDates(){
+  const res=document.getElementById('available-result');
+  const selSubjs=[...activeAdminSubjects];
+  if(!selSubjs.length){res.innerHTML='<p style="font-size:13px;color:#888">교과를 하나 이상 선택하세요.</p>';return;}
+  const subjResp={};
+  selSubjs.forEach(s=>{subjResp[s]=responses.filter(r=>r.subject===s);});
+  const noResp=selSubjs.filter(s=>subjResp[s].length===0);
+  let html='';
+  if(noResp.length)html+=`<div class="alert warn"><i class="ti ti-alert-triangle" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i><strong>${noResp.join(', ')}</strong> 교과는 아직 응답이 없습니다.</div>`;
+  const respondedSubjs=selSubjs.filter(s=>subjResp[s].length>0);
+  const workDates=allWorkDates();
+  const unavail={};
+  respondedSubjs.forEach(s=>{const u=new Set();subjResp[s].forEach(r=>r.dates.forEach(d=>u.add(d)));unavail[s]=u;});
+  const available=workDates.filter(d=>respondedSubjs.every(s=>!unavail[s].has(d)));
+  html+=`<div style="background:#EAF3DE;border:0.5px solid #97C459;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem">
+    <div style="font-size:14px;font-weight:500;color:#27500A;margin-bottom:8px"><i class="ti ti-circle-check" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>공통 출장 가능 날짜 — ${available.length}일</div>
+    ${available.length?`<div style="display:flex;flex-wrap:wrap;gap:5px">${available.map(ds=>{const[,mo,d]=ds.split('-'),dt=new Date(ds.replace(/-/g,'/')),dow=DAYS[dt.getDay()];return`<span style="background:#C0DD97;color:#27500A;border-radius:20px;padding:3px 10px;font-size:12px">${+mo}/${+d}(${dow})</span>`;}).join('')}</div>`:'<p style="font-size:13px;color:#3B6D11">공통 가능 날짜가 없습니다.</p>'}
+  </div>`;
+  respondedSubjs.forEach(s=>{
+    const c=SC[s],names=subjResp[s].map(r=>r.name);
+    html+=`<div style="margin-bottom:1.5rem"><div style="font-size:13px;font-weight:500;margin-bottom:8px">
+      <span style="background:${c.bg};color:${c.tx};border:0.5px solid ${c.bd};border-radius:20px;padding:2px 10px">${s}</span>
+      <span style="font-size:12px;color:#888;margin-left:8px">${names.length}명 / 총 ${ROSTER[s].length}명 응답</span></div>
+      <div style="overflow-x:auto"><table class="result-table"><thead><tr><th>날짜</th><th>요일</th>${names.map(n=>`<th>${n}</th>`).join('')}<th>불가</th></tr></thead><tbody>`;
+    workDates.forEach(ds=>{
+      const[,mo,d]=ds.split('-'),dt=new Date(ds.replace(/-/g,'/')),dow=DAYS[dt.getDay()];
+      const ngSet=new Set(subjResp[s].filter(r=>r.dates.includes(ds)).map(r=>r.name));
+      const ngCount=ngSet.size;
+      html+=`<tr><td>${+mo}/${+d}</td><td>${dow}</td>${names.map(n=>`<td class="${ngSet.has(n)?'cell-ng':'cell-ok'}">${ngSet.has(n)?'✕':'✓'}</td>`).join('')}<td style="${ngCount===0?'background:#EAF3DE;color:#27500A':'background:#FCEBEB;color:#A32D2D'};font-weight:500">${ngCount}</td></tr>`;
+    });
+    html+=`</tbody></table></div></div>`;
+  });
+  html+=`<div style="margin-top:1rem"><div style="font-size:14px;font-weight:500;margin-bottom:10px">날짜별 불가 인원 상세</div>`;
+  workDates.forEach(ds=>{
+    const[,mo,d]=ds.split('-'),dt=new Date(ds.replace(/-/g,'/')),dow=DAYS[dt.getDay()];
+    const ngList=[];
+    respondedSubjs.forEach(s=>{subjResp[s].filter(r=>r.dates.includes(ds)).forEach(r=>{ngList.push({name:r.name,subj:s,c:SC[s]});});});
+    const isAvail=respondedSubjs.length>0&&ngList.length===0;
+    html+=`<div class="date-list-item${isAvail?' all-ok':''}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:${ngList.length?'6px':'0'}">
+        <span style="font-size:15px;font-weight:500">${+mo}월 ${+d}일 (${dow})</span>
+        ${ngList.length>0?`<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:#FCEBEB;color:#A32D2D">불가 ${ngList.length}명</span>`:(respondedSubjs.length>0?`<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:#EAF3DE;color:#27500A">전원 가능</span>`:'')}
+      </div>
+      ${ngList.length>0?`<div style="display:flex;flex-wrap:wrap;gap:5px">${ngList.map(({name,subj,c})=>`<span style="font-size:11px;background:${c.bg};color:${c.tx};border:0.5px solid ${c.bd};border-radius:20px;padding:2px 8px">${name}(${subj})</span>`).join('')}</div>`:''}
+    </div>`;
+  });
+  html+='</div>';
+  res.innerHTML=html;
+}
+
+function renderRoster(){
+  const res=document.getElementById('roster-result');
+  const selSubjs=[...activeRosterSubjects];
+  if(!selSubjs.length){res.innerHTML='<p style="font-size:13px;color:#888">교과를 하나 이상 선택하세요.</p>';return;}
+  const respondedNames={};
+  responses.forEach(r=>{if(!respondedNames[r.subject])respondedNames[r.subject]=new Set();respondedNames[r.subject].add(r.name);});
+  let totalAll=0,totalDone=0;
+  selSubjs.forEach(s=>{totalAll+=ROSTER[s].length;totalDone+=(respondedNames[s]?.size||0);});
+  let html=`<div style="display:flex;gap:12px;margin-bottom:1.25rem;flex-wrap:wrap">
+    <div class="metric"><div class="metric-label">전체 대상</div><div class="metric-value">${totalAll}명</div></div>
+    <div class="metric" style="background:#EAF3DE"><div class="metric-label" style="color:#3B6D11">응답 완료</div><div class="metric-value" style="color:#3B6D11">${totalDone}명</div></div>
+    <div class="metric" style="background:#FCEBEB"><div class="metric-label" style="color:#A32D2D">미응답</div><div class="metric-value" style="color:#A32D2D">${totalAll-totalDone}명</div></div>
+  </div>`;
+  selSubjs.forEach(s=>{
+    const c=SC[s],allNames=ROSTER[s],doneSet=respondedNames[s]||new Set();
+    const done=allNames.filter(n=>doneSet.has(n)),notDone=allNames.filter(n=>!doneSet.has(n));
+    html+=`<div class="card" style="margin-bottom:1rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="background:${c.bg};color:${c.tx};border:0.5px solid ${c.bd};border-radius:20px;padding:3px 12px;font-size:14px;font-weight:500">${s}</span>
+        <span style="font-size:13px;color:#888">${done.length} / ${allNames.length}명 응답</span>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:12px;color:#3B6D11;font-weight:500;margin-bottom:6px"><i class="ti ti-circle-check" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i>응답 완료 (${done.length}명)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">${done.length?done.map(n=>`<span class="resp-badge">${n}</span>`).join(''):'<span style="font-size:12px;color:#aaa">없음</span>'}</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:#A32D2D;font-weight:500;margin-bottom:6px"><i class="ti ti-clock" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i>미응답 (${notDone.length}명)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">${notDone.length?notDone.map(n=>`<span class="noresp-badge">${n}</span>`).join(''):'<span style="font-size:12px;color:#3B6D11">전원 응답 완료!</span>'}</div>
+      </div>
+    </div>`;
+  });
+  res.innerHTML=html;
+}
+
+function loadAdminList(){
+  document.getElementById('total-count').textContent=responses.length;
+  const tbody=document.getElementById('admin-tbody');
+  if(!responses.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px">아직 응답이 없습니다</td></tr>';return;}
+  tbody.innerHTML=responses.map(r=>{
+    const c=SC[r.subject]||{bg:'#f0f0ee',bd:'#ccc',tx:'#666'};
+    return `<tr>
+      <td style="font-weight:500">${r.name}</td>
+      <td><span style="background:${c.bg};color:${c.tx};border:0.5px solid ${c.bd};border-radius:20px;padding:2px 8px;font-size:11px">${r.subject}</span></td>
+      <td style="text-align:center"><span style="background:#FCEBEB;color:#A32D2D;border-radius:20px;padding:2px 8px;font-size:11px">${r.dates.length}일</span></td>
+      <td style="max-width:240px"><div style="display:flex;flex-wrap:wrap;gap:3px">${r.dates.map(d=>`<span class="chip" style="font-size:11px;padding:2px 7px">${fmtDate(d)}</span>`).join('')||'<span style="font-size:12px;color:#aaa">없음</span>'}</div></td>
+      <td style="color:#888;white-space:nowrap;font-size:11px">${new Date(r.submittedAt).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportCSV(){
+  if(!responses.length){alert('응답 데이터가 없습니다.');return;}
+  let csv='\uFEFF이름,교과,불가날짜수,날짜목록,제출시각\n';
+  responses.forEach(r=>{csv+=`${r.name},${r.subject},${r.dates.length},"${r.dates.map(fmtDate).join(' / ')}",${new Date(r.submittedAt).toLocaleString('ko-KR')}\n`;});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='출장불가날짜.csv';a.click();
+}
+function clearData(){
+  if(!confirm('모든 응답을 삭제할까요?'))return;
+  responses=[];saveResponses();loadAdminList();
+  document.getElementById('total-count').textContent='0';
+  renderRoster();
+}
+
+function setScriptCode(){
+  document.getElementById('script-code-box').textContent=
+`function doPost(e) {
+  var sheet = SpreadsheetApp
+    .getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  if (sheet.getLastRow() === 0)
+    sheet.appendRow(['이름','교과','불가날짜수','날짜목록','제출시각']);
+  sheet.appendRow([
+    data.name, data.subject, data.dates.length,
+    data.dates.join(', '),
+    new Date(data.submittedAt).toLocaleString('ko-KR')
+  ]);
+  return ContentService
+    .createTextOutput(JSON.stringify({result:'ok'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+}
+function copyScript(){
+  navigator.clipboard.writeText(document.getElementById('script-code-box').textContent).then(()=>{
+    const b=event.target.closest('button');
+    b.innerHTML='<i class="ti ti-check"></i> 복사됨!';
+    setTimeout(()=>b.innerHTML='<i class="ti ti-copy"></i> 코드 복사',1500);
+  });
+}
+function saveSettings(){
+  const url=document.getElementById('inp-script-url').value.trim();
+  if(url)scriptUrl=url;
+  try{localStorage.setItem('sv4_settings',JSON.stringify({url:scriptUrl}));}catch(e){}
+  document.getElementById('settings-saved').style.display='block';
+  setTimeout(()=>document.getElementById('settings-saved').style.display='none',2500);
+}
+
+loadSettings();
+</script>
+</body>
+</html>
